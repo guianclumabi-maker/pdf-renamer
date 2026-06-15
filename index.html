@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Page Renamer & Splitter</title>
+  <meta name="description" content="Upload a multi-page PDF, upload a renaming table Excel file, and download each page as a separately named PDF in a ZIP." />
+
+  <!-- CDN Libraries (internet connection required) -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0d14;
+      --surface:     #16161f;
+      --surface2:    #1e1e2e;
+      --border:      #2a2a3d;
+      --accent:      #7c3aed;
+      --accent2:     #a855f7;
+      --accent-glow: rgba(124, 58, 237, 0.25);
+      --text:        #e2e8f0;
+      --muted:       #64748b;
+      --success:     #22c55e;
+      --warning:     #f59e0b;
+      --danger:      #ef4444;
+      --radius:      12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    header {
+      padding: 24px 40px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+    }
+    header .logo {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 600; }
+    header p  { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Layout ──────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 36px 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Steps ───────────────────────────────────── */
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } main { padding: 24px 16px; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: border-color .2s;
+    }
+    .card:focus-within { border-color: var(--accent); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .step-badge {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%;
+      font-size: .75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-header h2 { font-size: .95rem; font-weight: 600; }
+    .card-header p  { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Drop zone ───────────────────────────────── */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+    .dropzone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .dropzone .icon { font-size: 2rem; margin-bottom: 8px; }
+    .dropzone .label { font-size: .85rem; color: var(--muted); }
+    .dropzone .label strong { color: var(--accent2); }
+    .dropzone.has-file { border-style: solid; border-color: var(--success); }
+    .dropzone.has-file .label { color: var(--success); }
+
+    /* ── Config panel ────────────────────────────── */
+    .config-panel {
+      margin-top: 16px;
+      display: none;
+      gap: 12px;
+      flex-direction: column;
+    }
+    .config-panel.visible { display: flex; }
+
+    label { font-size: .8rem; color: var(--muted); margin-bottom: 4px; display: block; }
+
+    select, input[type=number], input[type=text] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: .85rem;
+      font-family: inherit;
+      appearance: none;
+      outline: none;
+      transition: border-color .2s;
+    }
+    select:focus, input:focus { border-color: var(--accent); }
+
+    .config-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    /* ── Column checklist ────────────────────────── */
+    .col-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .col-check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: border-color .15s;
+      font-size: .82rem;
+      color: var(--text);
+      user-select: none;
+    }
+    .col-check-item:hover { border-color: var(--accent2); }
+    .col-check-item input[type=checkbox] {
+      accent-color: var(--accent2);
+      width: 15px; height: 15px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .col-check-item span { flex: 1; }
+    .col-sample {
+      display: inline-block;
+      margin-left: 8px;
+      font-style: normal;
+      font-size: .72rem;
+      background: rgba(124,58,237,.15);
+      color: var(--accent2);
+      border-radius: 4px;
+      padding: 1px 6px;
+    }
+
+    /* ── Filename preview ────────────────────────── */
+    .filename-preview-wrap { margin-top: 4px; }
+    .filename-preview {
+      background: var(--surface2);
+      border: 1px dashed var(--accent);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: .82rem;
+      color: var(--accent2);
+      font-family: monospace;
+      word-break: break-all;
+      margin-top: 4px;
+    }
+
+    /* ── Sheet / page chips ──────────────────────── */
+    .sheet-list-wrap { margin-top: 14px; }
+    .sheet-list-label { font-size: .75rem; color: var(--muted); margin-bottom: 6px; }
+    .sheet-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .sheet-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: .75rem;
+      color: var(--accent2);
+      font-family: monospace;
+    }
+
+    /* ── Preview table ───────────────────────────── */
+    .preview-section { margin-bottom: 28px; display: none; }
+    .preview-section.visible { display: block; }
+    .preview-section h3 {
+      font-size: .9rem; font-weight: 600; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .badge {
+      background: var(--accent-glow);
+      color: var(--accent2);
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      padding: 2px 10px; font-size: .7rem; font-weight: 600;
+    }
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    thead tr { background: var(--surface2); }
+    th { padding: 10px 14px; font-weight: 600; text-align: left; color: var(--muted); border-bottom: 1px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(124,58,237,.06); }
+    td.file-name  { color: var(--text); }
+    td.status-ok  { color: var(--success); }
+    td.status-warn { color: var(--warning); }
+
+    /* ── Buttons ─────────────────────────────────── */
+    .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 22px;
+      border-radius: 9px;
+      border: none;
+      font-family: inherit; font-size: .88rem; font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 0 32px rgba(124,58,237,.5);
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-outline:hover:not(:disabled) { border-color: var(--accent2); color: var(--text); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      font-size: .82rem;
+      justify-content: center;
+    }
+    .btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); background: var(--accent-glow); }
+
+    /* ── Progress ────────────────────────────────── */
+    #progress-wrap { display: none; align-items: center; gap: 12px; flex: 1; min-width: 200px; }
+    #progress-wrap.visible { display: flex; }
+    .progress-bar-bg { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width .2s; border-radius: 999px; }
+    #progress-label { font-size: .78rem; color: var(--muted); white-space: nowrap; }
+
+    /* ── Toast ───────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 20px;
+      font-size: .85rem; display: none;
+      align-items: center; gap: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.5);
+      z-index: 999; max-width: 360px;
+      animation: slideIn .25s ease;
+    }
+    #toast.visible { display: flex; }
+    #toast.success { border-color: var(--success); }
+    #toast.error   { border-color: var(--danger); }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">📑</div>
+    <div>
+      <h1>PDF Page Renamer</h1>
+      <p>Split a multi-page PDF into individually named files — download as ZIP</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="steps">
+
+      <!-- Box 1 — Upload PDF -->
+      <div class="card">
+        <div class="card-header">
+          <div class="step-badge">1</div>
+          <div>
+            <h2>Upload PDF File</h2>
+            <p>Each page will be saved as its own PDF file</p>
+          </div>
+        </div>
+        <div id="dropzone" class="dropzone">
+          <input type="file" id="fileInput" accept=".pdf" />
+          <div class="icon">📄</div>
+          <div class="label">Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong></div>
+        </div>
+        <div id="page-info-wrap" style="display:none; margin-top:14px;">
+          <p class="sheet-list-label">Detected pages:</p>
+          <div id="page-chips" class="sheet-list"></div>
+        </div>
+      </div>
+
+      <!-- Box 2 — Upload renaming table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="step-badge">2</div>
+          <div>
+            <h2>Upload Renaming Table</h2>
+            <p>Excel with columns like <em>Type of Document, Courier name, Date</em></p>
+          </div>
+        </div>
+        <div id="dropzone2" class="dropzone">
+          <input type="file" id="fileInput2" accept=".xlsx,.xls" />
+          <div class="icon">🏷️</div>
+          <div class="label">Drop your <strong>renaming table</strong> here or <strong>click to browse</strong></div>
+        </div>
+
+        <button id="downloadTemplateBtn" class="btn btn-ghost" style="margin-top:12px;width:100%;">
+          ⬇ Download Sample Template
+        </button>
+
+        <div id="config-panel" class="config-panel">
+          <div class="config-row">
+            <div>
+              <label for="nameSheetSel">Sheet with name data</label>
+              <select id="nameSheetSel"></select>
+            </div>
+            <div>
+              <label for="headerRow2">Header row #</label>
+              <input type="number" id="headerRow2" value="1" min="1" style="width:80px;" />
+            </div>
+          </div>
+          <div>
+            <label>Columns to include in filename <span style="color:var(--muted);font-size:.75rem;">(check to include)</span></label>
+            <div id="col-checklist" class="col-checklist"></div>
+          </div>
+          <div>
+            <label for="separatorInp">Column separator</label>
+            <input type="text" id="separatorInp" value=" " placeholder="space" style="width:100px;" />
+          </div>
+          <div class="filename-preview-wrap">
+            <label>Filename preview (row 1)</label>
+            <div id="filename-preview" class="filename-preview">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mapping preview -->
+    <div id="preview-section" class="preview-section">
+      <h3>Mapping Preview <span id="previewCount" class="badge">0 pages</span></h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Page #</th><th>Output filename (.pdf)</th><th>Status</th></tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button id="generateBtn" class="btn btn-primary" disabled>⬇ Split &amp; Download ZIP</button>
+      <button id="resetBtn" class="btn btn-outline">↺ Reset</button>
+      <div id="progress-wrap">
+        <div class="progress-bar-bg"><div id="progress-fill" class="progress-bar-fill"></div></div>
+        <span id="progress-label">Processing…</span>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast"><span id="toastMsg"></span></div>
+
+  <script>
+    // ── State ────────────────────────────────────────────────────────────────
+    let pdfBytes  = null;
+    let pageCount = 0;
+    let workbook2 = null;
+    let mappings  = [];
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const dropzone      = document.getElementById('dropzone');
+    const fileInput     = document.getElementById('fileInput');
+    const pageInfoWrap  = document.getElementById('page-info-wrap');
+    const pageChips     = document.getElementById('page-chips');
+    const dropzone2     = document.getElementById('dropzone2');
+    const fileInput2    = document.getElementById('fileInput2');
+    const configPanel   = document.getElementById('config-panel');
+    const nameSheetSel  = document.getElementById('nameSheetSel');
+    const headerRow2Inp = document.getElementById('headerRow2');
+    const colChecklist  = document.getElementById('col-checklist');
+    const separatorInp  = document.getElementById('separatorInp');
+    const filenamePrev  = document.getElementById('filename-preview');
+    const previewSec    = document.getElementById('preview-section');
+    const previewBody   = document.getElementById('previewBody');
+    const previewCount  = document.getElementById('previewCount');
+    const generateBtn   = document.getElementById('generateBtn');
+    const resetBtn      = document.getElementById('resetBtn');
+    const progressWrap  = document.getElementById('progress-wrap');
+    const progressFill  = document.getElementById('progress-fill');
+    const progressLbl   = document.getElementById('progress-label');
+    const toast         = document.getElementById('toast');
+    const toastMsg      = document.getElementById('toastMsg');
+
+    // ── Dropzones ────────────────────────────────────────────────────────────
+    setupDropzone(dropzone,  fileInput,  handlePdf);
+    setupDropzone(dropzone2, fileInput2, handleExcel);
+
+    function setupDropzone(zone, input, handler) {
+      zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        if (e.dataTransfer.files[0]) {
+          input.value = ''; // Reset input value so future dialog selections trigger change
+          handler(e.dataTransfer.files[0]);
+        }
+      });
+      // Clear input value before file chooser opens so selecting the same file triggers change
+      input.addEventListener('click', () => {
+        input.value = '';
+      });
+      input.addEventListener('change', () => {
+        if (input.files[0]) handler(input.files[0]);
+      });
+    }
+
+    // ── Listeners ────────────────────────────────────────────────────────────
+    nameSheetSel.addEventListener('change', () => { buildColChecklist(); buildPreview(); });
+    headerRow2Inp.addEventListener('input', () => { buildColChecklist(); buildPreview(); });
+    separatorInp.addEventListener('input',  buildPreview);
+    resetBtn.addEventListener('click', resetAll);
+
+    // ── Sample template download ─────────────────────────────────────────────
+    document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([
+        ['Type of Document', 'Courier name', 'Date'],
+        ['DL1 COD', 'RAMOS Estephen Pecpec', '2026 06 01'],
+        ['DL1 COD', 'SANTOS Maria Cruz',     '2026 06 01'],
+        ['DL2 COD', 'DELA CRUZ Juan Pablo',  '2026 06 02'],
+      ]);
+      ws['!cols'] = [{ wch: 20 }, { wch: 28 }, { wch: 14 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Renaming Table');
+      XLSX.writeFile(wb, 'renaming_table_template.xlsx');
+    });
+
+    // ── Reset ────────────────────────────────────────────────────────────────
+    function resetAll() {
+      pdfBytes = null; pageCount = 0; workbook2 = null; mappings = [];
+      fileInput.value = ''; fileInput2.value = '';
+      resetZone(dropzone,  '📄', 'Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong>');
+      resetZone(dropzone2, '🏷️', 'Drop your <strong>renaming table</strong> here or <strong>click to browse</strong>');
+      pageInfoWrap.style.display = 'none'; pageChips.innerHTML = '';
+      configPanel.classList.remove('visible'); colChecklist.innerHTML = '';
+      filenamePrev.textContent = '—'; previewSec.classList.remove('visible');
+      generateBtn.disabled = true;
+    }
+
+    function resetZone(zone, icon, labelHtml) {
+      zone.classList.remove('has-file');
+      zone.querySelector('.icon').textContent = icon;
+      zone.querySelector('.label').innerHTML = labelHtml;
+    }
+
+    // ── Box 1: PDF ───────────────────────────────────────────────────────────
+    function handlePdf(file) {
+      if (!file.name.match(/\.pdf$/i)) { showToast('Please upload a PDF file.', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = async e => {
+        try {
+          pdfBytes  = e.target.result;
+          const doc = await PDFLib.PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+          pageCount = doc.getPageCount();
+          markDropzone(dropzone, '📄', `✓  ${file.name}  (${pageCount} page${pageCount !== 1 ? 's' : ''})`);
+          pageChips.innerHTML = '';
+          const shown = Math.min(pageCount, 50);
+          for (let i = 1; i <= shown; i++) {
+            const chip = document.createElement('span');
+            chip.className = 'sheet-chip'; chip.textContent = `Page ${i}`;
+            pageChips.appendChild(chip);
+          }
+          if (pageCount > 50) {
+            const chip = document.createElement('span');
+            chip.className = 'sheet-chip'; chip.textContent = `+${pageCount - 50} more…`;
+            pageChips.appendChild(chip);
+          }
+          pageInfoWrap.style.display = 'block';
+          buildPreview();
+        } catch(err) { console.error(err); showToast('Could not read the PDF. Make sure it is not encrypted.', 'error'); }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ── Box 2: Excel ─────────────────────────────────────────────────────────
+    function handleExcel(file) {
+      if (!file.name.match(/\.(xlsx|xls)$/i)) { showToast('Please upload an Excel file.', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          workbook2 = XLSX.read(e.target.result, { type: 'array' });
+          markDropzone(dropzone2, '🏷️', `✓  ${file.name}  (${workbook2.SheetNames.length} sheet${workbook2.SheetNames.length > 1 ? 's' : ''})`);
+          nameSheetSel.innerHTML = '';
+          workbook2.SheetNames.forEach((name, i) => {
+            const opt = document.createElement('option'); opt.value = i; opt.textContent = name;
+            nameSheetSel.appendChild(opt);
+          });
+          buildColChecklist(); configPanel.classList.add('visible'); buildPreview();
+        } catch { showToast('Could not read the Excel file.', 'error'); }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ── Column helpers ───────────────────────────────────────────────────────
+    function getNameRows() {
+      if (!workbook2) return { headers: [], rows: [] };
+      const sheetIdx  = parseInt(nameSheetSel.value) || 0;
+      const headerRow = Math.max(1, parseInt(headerRow2Inp.value) || 1) - 1;
+      const ws   = workbook2.Sheets[workbook2.SheetNames[sheetIdx]];
+      const all  = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const headers = (all[headerRow] || []).map(h => h.toString().trim());
+      
+      const rows = all.slice(headerRow + 1);
+      // Trim trailing empty rows to prevent clutter, but preserve intermediate blank rows to keep mapping alignment
+      while (rows.length > 0 && !rows[rows.length - 1].some(c => c !== '')) {
+        rows.pop();
+      }
+      return { headers, rows };
+    }
+
+    function buildColChecklist() {
+      const { headers, rows } = getNameRows();
+      colChecklist.innerHTML = '';
+      if (!headers.length) return;
+      headers.forEach((h, i) => {
+        const id   = `col-check-${i}`;
+        const item = document.createElement('label');
+        item.className = 'col-check-item'; item.setAttribute('for', id);
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.id = id; cb.dataset.colIndex = i; cb.checked = true;
+        cb.addEventListener('change', buildPreview);
+        const span = document.createElement('span');
+        span.textContent = h || `Column ${i + 1}`;
+        const sample = rows[0] ? (rows[0][i] || '').toString() : '';
+        if (sample) { const em = document.createElement('em'); em.className = 'col-sample'; em.textContent = sample; span.appendChild(em); }
+        item.appendChild(cb); item.appendChild(span); colChecklist.appendChild(item);
+      });
+      buildPreview();
+    }
+
+    function buildFilename(row) {
+      return Array.from(colChecklist.querySelectorAll('input[type=checkbox]:checked'))
+        .map(cb => (row[parseInt(cb.dataset.colIndex)] || '').toString().trim())
+        .filter(v => v).join(separatorInp.value);
+    }
+
+    // ── Mapping preview ──────────────────────────────────────────────────────
+    function buildPreview() {
+      if (!pageCount) return;
+      const { rows } = workbook2 ? getNameRows() : { rows: [] };
+      mappings = [];
+      const usedNames = new Set();
+      for (let i = 0; i < pageCount; i++) {
+        const name = workbook2 ? buildFilename(rows[i] || []) : '';
+        const baseName = name || `Page ${i + 1}`;
+        let finalName = sanitize(baseName);
+        
+        // Append unique suffix if the name is a duplicate (Windows filesystems are case-insensitive)
+        if (usedNames.has(finalName.toLowerCase())) {
+          let counter = 1;
+          let altName = `${finalName}_${counter}`;
+          while (usedNames.has(altName.toLowerCase())) {
+            counter++;
+            altName = `${finalName}_${counter}`;
+          }
+          finalName = altName;
+        }
+        usedNames.add(finalName.toLowerCase());
+        mappings.push({ pageNum: i + 1, outputName: finalName, hasName: !!name });
+      }
+      if (workbook2 && rows.length > 0) filenamePrev.textContent = (buildFilename(rows[0]) || '—') + '.pdf';
+      previewBody.innerHTML = '';
+      const shown = Math.min(mappings.length, 200);
+      for (let i = 0; i < shown; i++) {
+        const m = mappings[i];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="color:var(--muted);text-align:center;">Page ${m.pageNum}</td>
+          <td class="file-name">${esc(m.outputName)}.pdf</td>
+          <td class="${m.hasName ? 'status-ok' : 'status-warn'}">${m.hasName ? '✓ mapped' : '⚠ using page number'}</td>`;
+        previewBody.appendChild(tr);
+      }
+      if (mappings.length > 200) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="3" style="color:var(--muted);text-align:center;font-size:.78rem;">…and ${mappings.length - 200} more rows</td>`;
+        previewBody.appendChild(tr);
+      }
+      previewCount.textContent = `${mappings.length} page${mappings.length !== 1 ? 's' : ''}`;
+      previewSec.classList.add('visible');
+      generateBtn.disabled = mappings.length === 0;
+    }
+
+    // ── Generate ZIP ─────────────────────────────────────────────────────────
+    generateBtn.addEventListener('click', async () => {
+      if (!pdfBytes || !mappings.length) return;
+      generateBtn.disabled = true;
+      progressWrap.classList.add('visible');
+      const zip    = new JSZip();
+      const srcDoc = await PDFLib.PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      const total  = mappings.length;
+      const baseDate = new Date(); // Use sequential modification times to preserve order in file explorers
+      for (let idx = 0; idx < total; idx++) {
+        const { pageNum, outputName } = mappings[idx];
+        setProgress(idx / total, `Extracting page ${pageNum} of ${total}…`);
+        await sleep(5);
+        try {
+          const newDoc = await PDFLib.PDFDocument.create();
+          const [copiedPage] = await newDoc.copyPages(srcDoc, [pageNum - 1]);
+          newDoc.addPage(copiedPage);
+          const fileDate = new Date(baseDate.getTime() + idx * 1000); // 1 second difference per page
+          zip.file(`${outputName}.pdf`, await newDoc.save(), { date: fileDate });
+        } catch(err) { console.warn(`Skipped page ${pageNum}:`, err); }
+      }
+      setProgress(0.98, 'Building ZIP…');
+      await sleep(50);
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'renamed_pages.zip'; a.click();
+      URL.revokeObjectURL(url);
+      setProgress(1, 'Done!');
+      await sleep(400);
+      progressWrap.classList.remove('visible');
+      generateBtn.disabled = false;
+      showToast(`✓  ${total} PDF page${total !== 1 ? 's' : ''} saved to renamed_pages.zip`, 'success');
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function markDropzone(zone, icon, text) {
+      zone.classList.add('has-file');
+      zone.querySelector('.icon').textContent = icon;
+      zone.querySelector('.label').textContent = text;
+    }
+    function setProgress(frac, label) {
+      progressFill.style.width = `${Math.round(frac * 100)}%`;
+      progressLbl.textContent  = label;
+    }
+    function showToast(msg, type = 'success') {
+      toastMsg.textContent = msg;
+      toast.className = `visible ${type}`;
+      setTimeout(() => { toast.className = ''; }, 5000);
+    }
+    function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function sanitize(name) { return name.replace(/[\\/:*?"<>|]/g, '_').trim() || 'page'; }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  </script>
+</body>
+</html>
