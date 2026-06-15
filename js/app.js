@@ -15,9 +15,9 @@ document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
     // Header row
     ['Type of Document', 'Courier name', 'Date'],
     // Sample rows
-    ['DL1 COD', 'DOE John Smith', '2026 06 01'],
-    ['DL1 COD', 'SMITH Jane Doe', '2026 06 01'],
-    ['DL2 COD', 'JONES Alex Lee', '2026 06 02'],
+    ['Invoice', 'DOE John Smith', '2026 06 01'],
+    ['Receipt', 'SMITH Jane Doe', '2026 06 01'],
+    ['Contract', 'JONES Alex Lee', '2026 06 02'],
   ]);
 
   // Column widths
