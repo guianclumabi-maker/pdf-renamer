@@ -360,7 +360,9 @@
 <body>
 
   <header>
-    <div class="logo" id="navHomeBtn" style="cursor:pointer;" title="Go to Home">📑</div>
+    <div class="logo" id="navHomeBtn" style="cursor:pointer;" title="Go to Home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+    </div>
     <div>
       <h1 id="headerTitle">PDF Tools</h1>
       <p id="headerDesc">A suite of powerful PDF utilities</p>
@@ -372,17 +374,17 @@
     <div id="home-view" class="view active">
       <div class="home-grid">
          <div class="tool-card" onclick="showView('renamer-view', 'PDF Page Renamer & Splitter', 'Split a multi-page PDF into individually named files')">
-           <div class="tool-icon">✂️</div>
+           <div class="tool-icon" style="color:var(--accent2);"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg></div>
            <h3>PDF Page Renamer & Splitter</h3>
            <p>Upload a PDF and an Excel table to split and rename pages.</p>
          </div>
          <div class="tool-card" onclick="showView('pdf-to-word-view', 'PDF to Word', 'Convert your PDF files to editable Word documents')">
-           <div class="tool-icon">📝</div>
+           <div class="tool-icon" style="color:var(--accent2);"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></div>
            <h3>PDF to Word</h3>
            <p>Convert your PDF files to editable Word documents.</p>
          </div>
          <div class="tool-card" onclick="showView('word-to-pdf-view', 'Word to PDF', 'Convert your Word documents to PDF files')">
-           <div class="tool-icon">📄</div>
+           <div class="tool-icon" style="color:var(--accent2);"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 12"></polyline></svg></div>
            <h3>Word to PDF</h3>
            <p>Convert your Word documents to PDF files.</p>
          </div>
@@ -404,7 +406,7 @@
         </div>
         <div id="dropzone" class="dropzone">
           <input type="file" id="fileInput" accept=".pdf" />
-          <div class="icon">📄</div>
+          <div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
           <div class="label">Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong></div>
         </div>
         <div id="page-info-wrap" style="display:none; margin-top:14px;">
@@ -424,7 +426,7 @@
         </div>
         <div id="dropzone2" class="dropzone">
           <input type="file" id="fileInput2" accept=".xlsx,.xls" />
-          <div class="icon">🏷️</div>
+          <div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg></div>
           <div class="label">Drop your <strong>renaming table</strong> here or <strong>click to browse</strong></div>
         </div>
 
@@ -497,7 +499,7 @@
          </div>
          <div class="dropzone" id="dz-pdf-word" onclick="document.getElementById('input-pdf-word').click()">
            <input type="file" id="input-pdf-word" accept=".pdf" style="display:none;" />
-           <div class="icon">📄</div>
+           <div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
            <div class="label">Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong></div>
          </div>
          <div class="actions" style="margin-top:24px; justify-content:center;">
@@ -519,7 +521,7 @@
          </div>
          <div class="dropzone" id="dz-word-pdf" onclick="document.getElementById('input-word-pdf').click()">
            <input type="file" id="input-word-pdf" accept=".docx,.doc" style="display:none;" />
-           <div class="icon">📝</div>
+           <div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></div>
            <div class="label">Drop your <strong>.doc/.docx</strong> file here or <strong>click to browse</strong></div>
          </div>
          <div class="actions" style="margin-top:24px; justify-content:center;">
@@ -626,12 +628,16 @@
       XLSX.writeFile(wb, 'renaming_table_template.xlsx');
     });
 
+    const svgPDF = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>`;
+    const svgTable = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`;
+    const svgCheck = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+
     // ── Reset ────────────────────────────────────────────────────────────────
     function resetAll() {
       pdfBytes = null; pageCount = 0; workbook2 = null; mappings = [];
       fileInput.value = ''; fileInput2.value = '';
-      resetZone(dropzone,  '📄', 'Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong>');
-      resetZone(dropzone2, '🏷️', 'Drop your <strong>renaming table</strong> here or <strong>click to browse</strong>');
+      resetZone(dropzone,  svgPDF, 'Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong>');
+      resetZone(dropzone2, svgTable, 'Drop your <strong>renaming table</strong> here or <strong>click to browse</strong>');
       pageInfoWrap.style.display = 'none'; pageChips.innerHTML = '';
       configPanel.classList.remove('visible'); colChecklist.innerHTML = '';
       filenamePrev.textContent = '—'; previewSec.classList.remove('visible');
@@ -653,7 +659,7 @@
           pdfBytes  = e.target.result;
           const doc = await PDFLib.PDFDocument.load(pdfBytes, { ignoreEncryption: true });
           pageCount = doc.getPageCount();
-          markDropzone(dropzone, '📄', `✓  ${file.name}  (${pageCount} page${pageCount !== 1 ? 's' : ''})`);
+          markDropzone(dropzone, svgCheck, `✓  ${file.name}  (${pageCount} page${pageCount !== 1 ? 's' : ''})`);
           pageChips.innerHTML = '';
           const shown = Math.min(pageCount, 50);
           for (let i = 1; i <= shown; i++) {
@@ -680,7 +686,7 @@
       reader.onload = e => {
         try {
           workbook2 = XLSX.read(e.target.result, { type: 'array' });
-          markDropzone(dropzone2, '🏷️', `✓  ${file.name}  (${workbook2.SheetNames.length} sheet${workbook2.SheetNames.length > 1 ? 's' : ''})`);
+          markDropzone(dropzone2, svgCheck, `✓  ${file.name}  (${workbook2.SheetNames.length} sheet${workbook2.SheetNames.length > 1 ? 's' : ''})`);
           nameSheetSel.innerHTML = '';
           workbook2.SheetNames.forEach((name, i) => {
             const opt = document.createElement('option'); opt.value = i; opt.textContent = name;

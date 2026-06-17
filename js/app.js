@@ -87,12 +87,16 @@ separatorInp.addEventListener('input',   buildPreview);
 // ── Reset ─────────────────────────────────────────────────────────────────
 resetBtn.addEventListener('click', resetAll);
 
+    const svgPDF = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>`;
+    const svgTable = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`;
+    const svgCheck = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+
 function resetAll() {
   pdfBytes = null; pageCount = 0; workbook2 = null; mappings = [];
   fileInput.value = ''; fileInput2.value = '';
 
-  resetZone(dropzone,  '📄', 'Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong>');
-  resetZone(dropzone2, '🏷️', 'Drop your <strong>renaming table</strong> here or <strong>click to browse</strong>');
+  resetZone(dropzone,  svgPDF, 'Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong>');
+  resetZone(dropzone2, svgTable, 'Drop your <strong>renaming table</strong> here or <strong>click to browse</strong>');
 
   pageInfoWrap.style.display = 'none';
   pageChips.innerHTML = '';
@@ -105,7 +109,7 @@ function resetAll() {
 
 function resetZone(zone, icon, labelHtml) {
   zone.classList.remove('has-file');
-  zone.querySelector('.icon').textContent = icon;
+  zone.querySelector('.icon').innerHTML = icon;
   zone.querySelector('.label').innerHTML = labelHtml;
 }
 
@@ -122,7 +126,7 @@ function handlePdf(file) {
       const doc = await PDFLib.PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       pageCount = doc.getPageCount();
 
-      markDropzone(dropzone, '📄', `✓  ${file.name}  (${pageCount} page${pageCount !== 1 ? 's' : ''})`);
+      markDropzone(dropzone, svgCheck, `✓  ${file.name}  (${pageCount} page${pageCount !== 1 ? 's' : ''})`);
 
       // Show page chips (cap display at 50 for UI sanity)
       pageChips.innerHTML = '';
@@ -159,7 +163,7 @@ function handleExcel(file) {
   reader.onload = e => {
     try {
       workbook2 = XLSX.read(e.target.result, { type: 'array' });
-      markDropzone(dropzone2, '🏷️', `✓  ${file.name}  (${workbook2.SheetNames.length} sheet${workbook2.SheetNames.length > 1 ? 's' : ''})`);
+      markDropzone(dropzone2, svgCheck, `✓  ${file.name}  (${workbook2.SheetNames.length} sheet${workbook2.SheetNames.length > 1 ? 's' : ''})`);
       populateNameSheets();
       buildColChecklist();
       configPanel.classList.add('visible');
@@ -348,7 +352,7 @@ generateBtn.addEventListener('click', async () => {
 // ── Helpers ───────────────────────────────────────────────────────────────
 function markDropzone(zone, icon, text) {
   zone.classList.add('has-file');
-  zone.querySelector('.icon').textContent = icon;
+  zone.querySelector('.icon').innerHTML = icon;
   zone.querySelector('.label').textContent = text;
 }
 
