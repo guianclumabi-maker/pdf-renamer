@@ -13,15 +13,15 @@ document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([
     // Header row
-    ['Type of Document', 'Courier name', 'Date'],
+    ['Type of Document', 'Generic Name', 'Date'],
     // Sample rows
-    ['Invoice', 'DOE John Smith', '2026 06 01'],
-    ['Receipt', 'SMITH Jane Doe', '2026 06 01'],
-    ['Contract', 'JONES Alex Lee', '2026 06 02'],
+    ['Document_A', 'Name_1', '2026 01 01'],
+    ['Document_B', 'Name_2', '2026 01 02'],
+    ['Document_C', 'Name_3', '2026 01 03'],
   ]);
 
   // Column widths
-  ws['!cols'] = [{ wch: 20 }, { wch: 28 }, { wch: 14 }];
+  ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 14 }];
 
   XLSX.utils.book_append_sheet(wb, ws, 'Renaming Table');
   XLSX.writeFile(wb, 'renaming_table_template.xlsx');

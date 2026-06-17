@@ -69,6 +69,35 @@
       width: 100%;
     }
 
+    /* ── Views & Home Grid ───────────────────────── */
+    .view { display: none; animation: fadeIn .3s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      padding-top: 20px;
+    }
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tool-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px var(--accent-glow);
+    }
+    .tool-icon { font-size: 3rem; margin-bottom: 16px; }
+    .tool-card h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .tool-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
     /* ── Steps ───────────────────────────────────── */
     .steps {
       display: grid;
@@ -331,17 +360,40 @@
 <body>
 
   <header>
-    <div class="logo">📑</div>
+    <div class="logo" id="navHomeBtn" style="cursor:pointer;" title="Go to Home">📑</div>
     <div>
-      <h1>PDF Page Renamer</h1>
-      <p>Split a multi-page PDF into individually named files — download as ZIP</p>
+      <h1 id="headerTitle">PDF Tools</h1>
+      <p id="headerDesc">A suite of powerful PDF utilities</p>
     </div>
   </header>
 
   <main>
-    <div class="steps">
+    <!-- Home View -->
+    <div id="home-view" class="view active">
+      <div class="home-grid">
+         <div class="tool-card" onclick="showView('renamer-view', 'PDF Page Renamer & Splitter', 'Split a multi-page PDF into individually named files')">
+           <div class="tool-icon">✂️</div>
+           <h3>PDF Page Renamer & Splitter</h3>
+           <p>Upload a PDF and an Excel table to split and rename pages.</p>
+         </div>
+         <div class="tool-card" onclick="showView('pdf-to-word-view', 'PDF to Word', 'Convert your PDF files to editable Word documents')">
+           <div class="tool-icon">📝</div>
+           <h3>PDF to Word</h3>
+           <p>Convert your PDF files to editable Word documents.</p>
+         </div>
+         <div class="tool-card" onclick="showView('word-to-pdf-view', 'Word to PDF', 'Convert your Word documents to PDF files')">
+           <div class="tool-icon">📄</div>
+           <h3>Word to PDF</h3>
+           <p>Convert your Word documents to PDF files.</p>
+         </div>
+      </div>
+    </div>
 
-      <!-- Box 1 — Upload PDF -->
+    <!-- Renamer View -->
+    <div id="renamer-view" class="view">
+      <div class="steps">
+
+        <!-- Box 1 — Upload PDF -->
       <div class="card">
         <div class="card-header">
           <div class="step-badge">1</div>
@@ -430,11 +482,73 @@
         <span id="progress-label">Processing…</span>
       </div>
     </div>
+    </div> <!-- End Renamer View -->
+
+    <!-- PDF to Word View -->
+    <div id="pdf-to-word-view" class="view">
+       <div class="card" style="max-width: 600px; margin: 0 auto;">
+         <div class="card-header">
+           <div class="step-badge">1</div>
+           <div>
+             <h2>Upload PDF File</h2>
+             <p>Select the PDF you want to convert to Word</p>
+           </div>
+         </div>
+         <div class="dropzone" id="dz-pdf-word" onclick="document.getElementById('input-pdf-word').click()">
+           <input type="file" id="input-pdf-word" accept=".pdf" style="display:none;" />
+           <div class="icon">📄</div>
+           <div class="label">Drop your <strong>.pdf</strong> file here or <strong>click to browse</strong></div>
+         </div>
+         <div class="actions" style="margin-top:24px; justify-content:center;">
+           <button class="btn btn-primary" onclick="showToast('Conversion requires Backend API implementation.', 'error')">Convert to Word</button>
+         </div>
+       </div>
+    </div>
+
+    <!-- Word to PDF View -->
+    <div id="word-to-pdf-view" class="view">
+       <div class="card" style="max-width: 600px; margin: 0 auto;">
+         <div class="card-header">
+           <div class="step-badge">1</div>
+           <div>
+             <h2>Upload Word File</h2>
+             <p>Select the Word document you want to convert to PDF</p>
+           </div>
+         </div>
+         <div class="dropzone" id="dz-word-pdf" onclick="document.getElementById('input-word-pdf').click()">
+           <input type="file" id="input-word-pdf" accept=".docx,.doc" style="display:none;" />
+           <div class="icon">📝</div>
+           <div class="label">Drop your <strong>.doc/.docx</strong> file here or <strong>click to browse</strong></div>
+         </div>
+         <div class="actions" style="margin-top:24px; justify-content:center;">
+           <button class="btn btn-primary" onclick="showToast('Conversion requires Backend API implementation.', 'error')">Convert to PDF</button>
+         </div>
+       </div>
+    </div>
+
   </main>
 
   <div id="toast"><span id="toastMsg"></span></div>
 
   <script>
+    // ── Navigation ───────────────────────────────────────────────────────────
+    const navHomeBtn  = document.getElementById('navHomeBtn');
+    const headerTitle = document.getElementById('headerTitle');
+    const headerDesc  = document.getElementById('headerDesc');
+    const views       = document.querySelectorAll('.view');
+
+    navHomeBtn.addEventListener('click', () => {
+      showView('home-view', 'PDF Tools', 'A suite of powerful PDF utilities');
+    });
+
+    function showView(viewId, title, desc) {
+      views.forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+      headerTitle.textContent = title;
+      headerDesc.textContent = desc;
+      if(viewId === 'home-view') resetAll();
+    }
+
     // ── State ────────────────────────────────────────────────────────────────
     let pdfBytes  = null;
     let pageCount = 0;
@@ -499,12 +613,12 @@
     document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet([
-        ['Type of Document', 'Courier name', 'Date'],
-        ['Invoice', 'DOE John Smith', '2026 06 01'],
-        ['Receipt', 'SMITH Jane Doe', '2026 06 01'],
-        ['Contract', 'JONES Alex Lee', '2026 06 02'],
+        ['Type of Document', 'Generic Name', 'Date'],
+        ['Document_A', 'Name_1', '2026 01 01'],
+        ['Document_B', 'Name_2', '2026 01 02'],
+        ['Document_C', 'Name_3', '2026 01 03'],
       ]);
-      ws['!cols'] = [{ wch: 20 }, { wch: 28 }, { wch: 14 }];
+      ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 14 }];
       XLSX.utils.book_append_sheet(wb, ws, 'Renaming Table');
       XLSX.writeFile(wb, 'renaming_table_template.xlsx');
     });
